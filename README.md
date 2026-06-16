@@ -1,57 +1,96 @@
-# 📈 Sales Quantity Forecasting with ARIMA
+# 📈 Stock Prediction — Time Series Analysis
 
-> Time series analysis and demand forecasting on retail transaction data using ARIMA modeling
+> Retail sales quantity forecasting using walk-forward ARIMA modeling with stationarity testing, autocorrelation analysis, and multi-metric evaluation
 
-![Python](https://img.shields.io/badge/Python-3.7+-blue?style=flat&logo=python)
-![pandas](https://img.shields.io/badge/pandas-1.x-150458?style=flat&logo=pandas)
-![statsmodels](https://img.shields.io/badge/statsmodels-ARIMA-green?style=flat)
-![scikit-learn](https://img.shields.io/badge/scikit--learn-metrics-orange?style=flat&logo=scikit-learn)
+![Python](https://img.shields.io/badge/Python-3.8+-blue?style=flat&logo=python)
+![pandas](https://img.shields.io/badge/pandas-2.0+-150458?style=flat&logo=pandas)
+![statsmodels](https://img.shields.io/badge/statsmodels-0.14+-green?style=flat)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-1.4+-orange?style=flat&logo=scikit-learn)
+![matplotlib](https://img.shields.io/badge/matplotlib-3.8+-blue?style=flat)
+![License](https://img.shields.io/badge/License-MIT-lightgrey?style=flat)
 
 ---
 
 ## 📌 Overview
 
-This project applies **ARIMA (AutoRegressive Integrated Moving Average)** to forecast monthly product demand from retail invoice data. It covers the full pipeline: data cleaning, feature engineering, time series resampling, autocorrelation analysis, model training, and visual evaluation.
+This project builds a **monthly sales quantity forecasting pipeline** on retail transaction data using ARIMA (AutoRegressive Integrated Moving Average). It covers every step from raw invoice records to a walk-forward forecast with full visual and statistical evaluation.
 
-**Business value**: Accurate demand forecasting reduces stockouts, improves procurement planning, and directly impacts revenue.
-
----
-
-## 🔍 What the script does
-
-1. **Loads** raw retail transaction data from `dataset.csv`
-2. **Cleans** the data — removes cancelled orders (negative quantities), zero-price records, and empty rows
-3. **Engineers** a `Total_Price` column (`Quantity × UnitPrice`) and extracts year-month from invoice dates
-4. **Aggregates** daily transactions into monthly quantity totals
-5. **Plots** the time series and an autocorrelation chart to identify seasonality and lag patterns
-6. **Trains** an ARIMA(2,2,0) model on 66% of the data and forecasts the remaining 34%
-7. **Evaluates** forecast accuracy using Mean Squared Error (MSE)
-8. **Visualizes** actual vs predicted quantities side by side
+**Business value**: Accurate demand forecasting reduces overstock costs, prevents stockouts, and gives procurement teams a data-driven basis for monthly purchasing decisions.
 
 ---
 
-## 📁 Project structure
+## ✨ What's new in this version
+
+| Area | Improvement |
+|---|---|
+| **API** | Migrated from deprecated `statsmodels.tsa.arima_model` to modern `statsmodels.tsa.arima.model` |
+| **Date parsing** | Replaced removed `pandas.datetime` with `pd.to_datetime()` |
+| **Metrics** | Added RMSE, MAE, and MAPE alongside MSE for richer evaluation |
+| **EDA** | Added ADF stationarity test to validate differencing assumptions |
+| **Charts** | Two-panel forecast plot: full series overview + test-period zoom with error shading |
+| **Structure** | Refactored into 6 named functions with a `main()` entry point |
+| **Robustness** | Column validation on load, `unicode_escape` encoding for retail datasets |
+
+---
+
+## 📁 Repository structure
 
 ```
-sales-arima-forecast/
-├── forecast.py        # Main analysis and forecasting script
-├── dataset.csv        # Input data (retail transaction records)
+stock-prediction-time-series-analysis/
+├── main.py                  # Full forecasting pipeline
+├── dataset.csv              # Primary transaction dataset
+├── retail_dataset.xlsx      # Raw retail data (Excel format)
+├── autocorrelation.png      # Autocorrelation plot output
+├── data_per_month.png       # Monthly quantity trend chart
+├── prediction.png           # Actual vs predicted forecast chart
 └── README.md
 ```
 
 ---
 
-## 📊 Dataset format
+## 🔍 Pipeline steps
+
+```
+Load CSV  →  Clean & validate  →  Monthly aggregation
+    →  EDA + ADF test  →  Walk-forward ARIMA  →  Evaluate + Plot
+```
+
+| Step | Function | What it does |
+|---|---|---|
+| Load | `load_data()` | Reads CSV, validates required columns exist |
+| Clean | `clean_data()` | Drops returns, zero prices, blanks; creates `Total_Price` |
+| Aggregate | `build_monthly_series()` | Groups invoices into monthly quantity totals, resamples to Month-Start |
+| EDA | `run_eda()` | Plots trend + autocorrelation, runs ADF stationarity test |
+| Forecast | `forecast_arima()` | Walk-forward ARIMA — trains on expanding window, predicts one step ahead |
+| Visualise | `plot_results()` | Two-panel chart saved as `prediction.png` |
+
+---
+
+## 📊 Output charts
+
+### Monthly sales quantity trend + autocorrelation
+Aggregated monthly totals with autocorrelation lags — used to confirm stationarity and select ARIMA parameters.
+
+![Monthly Data](data_per_month.png)
+
+### Actual vs predicted — full view and test zoom
+Top panel shows the full series with train/test split marked. Bottom panel zooms into the test period with error shading and metrics in the title.
+
+![Prediction](prediction.png)
+
+---
+
+## 📋 Dataset format
 
 The script expects a CSV file named `dataset.csv` with at least these columns:
 
-| Column | Description | Example |
+| Column | Type | Description |
 |---|---|---|
-| `InvoiceDate` | Date of transaction | `2011-01-15 10:30:00` |
-| `Quantity` | Number of units sold | `12` |
-| `UnitPrice` | Price per unit | `3.75` |
+| `InvoiceDate` | string / datetime | Transaction date |
+| `Quantity` | integer | Units sold per line item |
+| `UnitPrice` | float | Price per unit |
 
-Compatible with the [UCI Online Retail Dataset](https://archive.ics.uci.edu/ml/datasets/online+retail) — download it and rename to `dataset.csv`.
+Compatible with the [UCI Online Retail Dataset](https://archive.ics.uci.edu/ml/datasets/online+retail) — download and rename to `dataset.csv`.
 
 ---
 
@@ -59,81 +98,96 @@ Compatible with the [UCI Online Retail Dataset](https://archive.ics.uci.edu/ml/d
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/yourusername/sales-arima-forecast.git
-cd sales-arima-forecast
+git clone https://github.com/Benmwaura/stock-prediction-time-series-analysis.git
+cd stock-prediction-time-series-analysis
 ```
 
 **2. Install dependencies**
 ```bash
-pip install pandas matplotlib seaborn statsmodels scikit-learn numpy
+pip install pandas numpy matplotlib seaborn statsmodels scikit-learn openpyxl
 ```
 
-**3. Add your dataset**
-
-Place your `dataset.csv` in the project root directory.
-
-**4. Run the script**
+**3. Run the pipeline**
 ```bash
-python forecast.py
+python main.py
 ```
+
+The terminal prints step-by-step predictions and a metrics summary. Two charts are saved automatically and displayed.
 
 ---
 
-## 📤 Output
+## ⚙️ ARIMA model configuration
 
-Running the script produces three sequential plots:
+Configured as `ARIMA(p=2, d=2, q=0)` — editable at the top of `main.py`:
 
-**Monthly quantity trend** — aggregated sales volume over time, useful for spotting growth trends and seasonality.
-
-**Autocorrelation plot** — shows how strongly past values correlate with future ones, used to validate ARIMA lag parameters.
-
-**Actual vs predicted** — blue line shows real test values; red line shows ARIMA forecasts. Closer lines = better model fit.
-
-The terminal also prints step-by-step predicted vs expected values and a final MSE score:
-
+```python
+ARIMA_ORDER  = (2, 2, 0)   # (p, d, q)
+TRAIN_SPLIT  = 0.66         # 66% train / 34% test
+RESAMPLE_FREQ = "MS"        # Month-Start resampling
 ```
-predicted=45231.2, expected=47800.0
-predicted=48102.6, expected=46500.0
-...
-Test MSE: 3241502.847
-```
-
----
-
-## ⚙️ Model configuration
-
-The ARIMA model is configured as `ARIMA(p=2, d=2, q=0)`:
 
 | Parameter | Value | Meaning |
 |---|---|---|
-| `p` | 2 | Uses the last 2 time steps as autoregressive inputs |
-| `d` | 2 | Differences the series twice to achieve stationarity |
+| `p` | 2 | Autoregressive order — uses last 2 months as input |
+| `d` | 2 | Differencing order — applied twice to remove trend |
 | `q` | 0 | No moving average component |
 
-To tune these parameters, inspect the autocorrelation plot output — it reveals the optimal lag structure for your specific dataset.
+The autocorrelation plot output helps guide parameter tuning. The spike visible around lag 10–11 suggests potential seasonal structure worth exploring with SARIMA.
+
+---
+
+## 📐 Evaluation metrics
+
+The model is evaluated on the held-out test set using four metrics:
+
+| Metric | Description |
+|---|---|
+| **MSE** | Mean Squared Error — penalises large errors heavily |
+| **RMSE** | Root MSE — same unit as the target (quantities), easier to interpret |
+| **MAE** | Mean Absolute Error — average absolute deviation per month |
+| **MAPE** | Mean Absolute Percentage Error — scale-independent, good for business reporting |
+
+Sample terminal output:
+```
+┌─────────────────────────────┐
+│  Test MSE  :    3,241,502   │
+│  Test RMSE :        1,800   │
+│  Test MAE  :        1,420   │
+│  Test MAPE :         8.3%   │
+└─────────────────────────────┘
+```
 
 ---
 
 ## 🛠 Dependencies
 
-| Library | Purpose |
-|---|---|
-| `pandas` | Data loading, cleaning, and time series resampling |
-| `matplotlib` | Plotting |
-| `seaborn` | Color palette |
-| `statsmodels` | ARIMA model |
-| `scikit-learn` | MSE evaluation metric |
-| `numpy` | Array operations |
+```
+pandas>=2.0
+numpy>=1.26
+matplotlib>=3.8
+seaborn>=0.13
+statsmodels>=0.14
+scikit-learn>=1.4
+openpyxl>=3.1
+```
 
 ---
 
-## 🔭 Possible improvements
+## 🔭 Future improvements
 
-- Grid search over `(p, d, q)` using AIC/BIC to find optimal parameters automatically
-- Add SARIMA to capture seasonal patterns (monthly/quarterly cycles)
-- Compare against Prophet or LSTM baselines
-- Forecast individual product categories rather than aggregate quantity
-- Export predictions to CSV for BI tool integration
+- **Parameter tuning** — grid search over `(p, d, q)` using AIC/BIC scoring
+- **SARIMA** — capture seasonal monthly/quarterly cycles visible in autocorrelation
+- **Prophet** — Facebook's forecasting library as a no-differencing benchmark
+- **Per-product forecasting** — model individual SKUs rather than aggregate quantity
+- **Streamlit dashboard** — interactive forecast explorer with date range selector
+- **CI/CD pipeline** — scheduled daily retraining on fresh transaction data
+
+---
+
+## 👤 Author
+
+**Benmwaura**
+[GitHub Profile](https://github.com/Benmwaura)
 
 ---
 
